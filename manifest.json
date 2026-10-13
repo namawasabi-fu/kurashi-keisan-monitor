@@ -1,0 +1,26 @@
+[
+  {
+    "file": "weekly_monitor.mjs",
+    "sha256": "345983d4c24ba6d92a96e67cda4c6675513a98156fe761d7d875e9d65eba06d0"
+  },
+  {
+    "file": "maintenance_check.mjs",
+    "sha256": "ebc6c1ca11577ab1ef4f4e459c4fe6d6a2f8491b807a0f1b3e97bb3cd54b19aa"
+  },
+  {
+    "file": "calculators_v11.mjs",
+    "sha256": "651b7dee3e970dd2cf2e15f819f354649529bd07e57f8250def1f310f069df26"
+  },
+  {
+    "file": "urls_v11.json",
+    "sha256": "c0a5b439f4d3ecd21408785c766d71e45227f04392f8a862a1ba32325a502834"
+  },
+  {
+    "file": "guide_urls_v12.json",
+    "sha256": "9d62dd30834c22efd3fb3dd5aa91c64be55c6697ad637d0f906555c8d8a8f750"
+  },
+  {
+    "file": ".github/workflows/weekly-monitor.yml",
+    "sha256": "ed26f040b6559bd9903de58c20bb4fd2bbe6d8ff91074f1ef0e93cb252a4366f"
+  }
+]
