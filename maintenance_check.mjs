@@ -10,15 +10,24 @@ paths.push(...Object.keys(newPages));
 const guides=fs.existsSync('guide_urls_v12.json')?Object.fromEntries(Object.entries(JSON.parse(fs.readFileSync('guide_urls_v12.json','utf8'))).map(([k,u])=>[new URL(u).pathname,k])):{};
 paths.push(...Object.keys(guides));
 const timeoutMs=12000;
+const responseCache=new Map();
 let pass=0,fail=0;
 const check=(label,condition)=>{console.log(`${condition?'PASS':'FAIL'} ${label}`);condition?pass++:fail++};
 async function get(path){
+  if(responseCache.has(path))return responseCache.get(path);
   let lastError;
-  for(let attempt=0;attempt<2;attempt++){
+  for(let attempt=0;attempt<3;attempt++){
     try{
       const response=await fetch(base+path,{signal:AbortSignal.timeout(timeoutMs)});
-      if(response.status>=500&&attempt===0)continue;
-      return {response,text:await response.text()};
+      if((response.status===429||response.status>=500)&&attempt<2){
+        await response.body?.cancel();
+        await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
+        continue;
+      }
+      const result={response,text:await response.text()};
+      console.log(`FETCH ${path} ${response.status} ${response.url}`);
+      responseCache.set(path,result);
+      return result;
     }catch(error){lastError=error}
   }
   throw new Error(`MONITOR_TRANSPORT_ERROR ${path}: ${String(lastError)}`);
