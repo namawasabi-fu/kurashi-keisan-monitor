@@ -24,11 +24,18 @@ async function get(path){
         await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
         continue;
       }
+      if(response.status===429||new URL(response.url).host==='www.google.com'&&new URL(response.url).pathname.startsWith('/sorry/')){
+        await response.body?.cancel();
+        throw new Error(`MONITOR_TRANSPORT_ERROR rate-limited ${path}: ${response.status} ${response.url}`);
+      }
       const result={response,text:await response.text()};
       console.log(`FETCH ${path} ${response.status} ${response.url}`);
       responseCache.set(path,result);
       return result;
-    }catch(error){lastError=error}
+    }catch(error){
+      if(String(error).includes('MONITOR_TRANSPORT_ERROR'))throw error;
+      lastError=error;
+    }
   }
   throw new Error(`MONITOR_TRANSPORT_ERROR ${path}: ${String(lastError)}`);
 }
