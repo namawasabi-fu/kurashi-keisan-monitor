@@ -1,0 +1,26 @@
+name: Kurashi weekly monitor
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * 1'
+permissions:
+  contents: read
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public site
+        run: node weekly_monitor.mjs
+      - name: Keep failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-monitor-failure
+          path: monitor_logs/*.json
+          if-no-files-found: ignore
+          retention-days: 7
