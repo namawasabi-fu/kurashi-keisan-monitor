@@ -1,3 +1,4 @@
+# GitHubの公開リポジトリに配置した場合にだけ動作する準備ファイル。
 name: Kurashi weekly monitor
 on:
   workflow_dispatch:
@@ -14,8 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check public site
-        run: node weekly_monitor.mjs
+      - name: Check calculator logic without Blogger requests
+        run: node weekly_monitor.mjs --local-only
       - name: Keep failure log
         if: failure()
         uses: actions/upload-artifact@v4
