@@ -2,7 +2,7 @@
 // 外部API・定期実行なし。異常が1件でもあれば終了コード1で安全に停止する。
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {capacity,replacement,led,fridge,usbC} from './calculators_v11.mjs';
+import {runCalculatorChecks} from './calculator_check.mjs';
 const base='https://kurashi-keisan-shitsu.blogspot.com';
 const paths=['/','/p/blog-page.html','/p/w.html','/p/mah.html','/p/whw.html','/p/blog-page_12.html','/p/blog-page_105.html','/2026/10/blog-post.html'];
 const newPages=fs.existsSync('urls_v11.json')?Object.fromEntries(Object.entries(JSON.parse(fs.readFileSync('urls_v11.json','utf8'))).map(([k,u])=>[new URL(u).pathname,k])):{};
@@ -16,10 +16,10 @@ const check=(label,condition)=>{console.log(`${condition?'PASS':'FAIL'} ${label}
 async function get(path){
   if(responseCache.has(path))return responseCache.get(path);
   let lastError;
-  for(let attempt=0;attempt<3;attempt++){
+  for(let attempt=0;attempt<2;attempt++){
     try{
       const response=await fetch(base+path,{signal:AbortSignal.timeout(timeoutMs)});
-      if((response.status===429||response.status>=500)&&attempt<2){
+      if(response.status>=500&&attempt<1){
         await response.body?.cancel();
         await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
         continue;
@@ -86,17 +86,7 @@ try{
   check('投稿サイトマップ',postMap.includes(base+'/2026/10/blog-post.html'));
   const pageMap=(await get('/sitemap-pages.xml')).text;
   check('固定ページサイトマップ',paths.slice(1,7).concat(Object.keys(newPages)).every(p=>pageMap.includes(base+p)));
-  const bad=fn=>{try{fn();return false}catch{return true}};
-  check('容量計算回帰',capacity({watts:60,hours:5,efficiency:85,reserve:20,outputMargin:20,surge:''}).wh===442);
-  check('容量計算異常入力',bad(()=>capacity({watts:0,hours:5,efficiency:85,reserve:20,outputMargin:20,surge:''})));
-  check('買い替え計算回帰',replacement({oldKwh:500,newKwh:300,rate:31,extraCost:30000}).annualYen===6200);
-  check('買い替え回収不可',replacement({oldKwh:300,newKwh:500,rate:31,extraCost:30000}).paybackYears===null);
-  check('LED計算回帰',Math.abs(led({oldW:60,newW:9,count:2,hours:4,days:365,rate:31,cost:3000}).annualYen-4616.52)<1e-8);
-  check('LED異常入力',bad(()=>led({oldW:60,newW:9,count:1.5,hours:4,days:365,rate:31,cost:3000})));
-  check('冷蔵庫計算回帰',fridge({annualKwh:350,rate:31,compareKwh:''}).annualYen===10850);
-  check('冷蔵庫異常入力',bad(()=>fridge({annualKwh:'',rate:31,compareKwh:''})));
-  check('USB-C計算回帰',usbC({deviceW:45,secondW:20}).totalW===65);
-  check('USB-C異常入力',bad(()=>usbC({deviceW:0,secondW:20})));
+  runCalculatorChecks(check);
 }catch(error){console.error(String(error));fail++}
 console.log(`結果: ${pass}件成功 / ${fail}件失敗`);
 if(fail)process.exitCode=1;
